@@ -1,0 +1,182 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<!-- Hero Section -->
+    <div style="text-align: center; padding: 60px 20px; margin-bottom: 50px; position: relative; overflow: hidden;">
+    <!-- Decorative gradients -->
+        <div style="position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 600px; height: 600px;
+                    background: radial-gradient(circle, rgba(147, 51, 234, 0.15), transparent 70%);
+                    pointer-events: none;"></div>
+
+        <div style="position: relative; z-index: 1;">
+            <h1 style="font-size: 3.5rem; margin-bottom: 20px; line-height: 1.2;">
+                Welcome to EconDash
+            </h1>
+            <p style="font-size: 1.4rem; color: #a0a0a0; max-width: 700px; margin: 0 auto 40px;">
+                Track key U.S. economic indicators in real-time with professional visualizations and insights
+            </p>
+            <a href="/dashboard" class="button-link" style="font-size: 1.2rem; padding: 16px 32px;">
+                View Dashboard →
+            </a>
+        </div>
+    </div>
+
+<!-- Feature Cards -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; margin-bottom: 60px;">
+
+    <!-- Dashboard Card -->
+        <div style="background: linear-gradient(135deg, rgba(147, 51, 234, 0.1), rgba(107, 33, 168, 0.05));
+                    border: 1px solid rgba(147, 51, 234, 0.3);
+                    border-radius: 16px;
+                    padding: 35px;
+                    transition: transform 0.3s ease, box-shadow 0.3s ease;
+                    cursor: pointer;" onclick="window.location.href='/dashboard'">
+            <div style="font-size: 3rem; margin-bottom: 20px;">📊</div>
+            <h3 style="margin: 0 0 15px 0; color: #a855f7; font-size: 1.5rem;">Dashboard</h3>
+            <p style="color: #a0a0a0; line-height: 1.6; margin: 0;">
+                Get a comprehensive overview of all major economic indicators with latest values, trends, and the current yield curve.
+            </p>
+        </div>
+
+    <!-- Indicators Card -->
+        <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.05));
+                    border: 1px solid rgba(16, 185, 129, 0.3);
+                    border-radius: 16px;
+                    padding: 35px;
+                    transition: transform 0.3s ease, box-shadow 0.3s ease;
+                    cursor: pointer;" onclick="window.location.href='/gdp'">
+            <div style="font-size: 3rem; margin-bottom: 20px;">📈</div>
+            <h3 style="margin: 0 0 15px 0; color: #10b981; font-size: 1.5rem;">Individual Indicators</h3>
+            <p style="color: #a0a0a0; line-height: 1.6; margin: 0;">
+                Deep dive into GDP, Unemployment, CPI, Fed Funds Rate, and S&P 500 with interactive charts and historical data.
+            </p>
+        </div>
+
+    <!-- Yield Curve Card -->
+        <div style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.05));
+                    border: 1px solid rgba(245, 158, 11, 0.3);
+                    border-radius: 16px;
+                    padding: 35px;
+                    transition: transform 0.3s ease, box-shadow 0.3s ease;
+                    cursor: pointer;" onclick="window.location.href='/yield-curve'">
+            <div style="font-size: 3rem; margin-bottom: 20px;">📉</div>
+            <h3 style="margin: 0 0 15px 0; color: #f59e0b; font-size: 1.5rem;">Yield Curve</h3>
+            <p style="color: #a0a0a0; line-height: 1.6; margin: 0;">
+                Monitor the Treasury yield curve and detect recession signals with our inversion tracker and historical spread analysis.
+            </p>
+        </div>
+
+    <!-- Compare Card -->
+        <div style="background: linear-gradient(135deg, rgba(168, 85, 247, 0.1), rgba(107, 33, 168, 0.05));
+                    border: 1px solid rgba(168, 85, 247, 0.3);
+                    border-radius: 16px;
+                    padding: 35px;
+                    transition: transform 0.3s ease, box-shadow 0.3s ease;
+                    cursor: pointer;" onclick="window.location.href='/compare'">
+            <div style="font-size: 3rem; margin-bottom: 20px;">⚖️</div>
+            <h3 style="margin: 0 0 15px 0; color: #a855f7; font-size: 1.5rem;">Compare</h3>
+            <p style="color: #a0a0a0; line-height: 1.6; margin: 0;">
+                Compare multiple indicators side-by-side with normalized indexing to see relative performance over time.
+            </p>
+        </div>
+
+    <!-- Calendar Card -->
+        <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.05));
+                    border: 1px solid rgba(16, 185, 129, 0.3);
+                    border-radius: 16px;
+                    padding: 35px;
+                    transition: transform 0.3s ease, box-shadow 0.3s ease;
+                    cursor: pointer;" onclick="window.location.href='/calendar'">
+            <div style="font-size: 3rem; margin-bottom: 20px;">📅</div>
+            <h3 style="margin: 0 0 15px 0; color: #10b981; font-size: 1.5rem;">Economic Calendar</h3>
+            <p style="color: #a0a0a0; line-height: 1.6; margin: 0;">
+                Stay updated on upcoming FOMC meetings and major economic data releases that move markets.
+            </p>
+        </div>
+
+    <!-- Data Source Card -->
+        <div style="background: linear-gradient(135deg, rgba(147, 51, 234, 0.1), rgba(107, 33, 168, 0.05));
+                    border: 1px solid rgba(147, 51, 234, 0.3);
+                    border-radius: 16px;
+                    padding: 35px;">
+            <div style="font-size: 3rem; margin-bottom: 20px;">🏛️</div>
+            <h3 style="margin: 0 0 15px 0; color: #9333ea; font-size: 1.5rem;">Trusted Data</h3>
+            <p style="color: #a0a0a0; line-height: 1.6; margin: 0;">
+                All data sourced directly from the Federal Reserve Economic Data (FRED) API - the most authoritative economic database.
+            </p>
+        </div>
+    </div>
+
+<!-- What You'll Find Section -->
+    <div style="background: linear-gradient(135deg, rgba(147, 51, 234, 0.1), rgba(16, 185, 129, 0.05));
+                border: 1px solid rgba(147, 51, 234, 0.3);
+                border-radius: 16px;
+                padding: 40px;
+                margin-bottom: 60px;">
+        <h2 style="text-align: center; margin-bottom: 30px; color: #a855f7;">What You'll Find</h2>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px;">
+            <div>
+                <h4 style="color: #10b981; margin-bottom: 10px;">📊 Real-Time Data</h4>
+                <p style="color: #a0a0a0; margin: 0; line-height: 1.6;">
+                    Live updates from FRED with the latest economic indicators as they're released.
+                </p>
+            </div>
+
+            <div>
+                <h4 style="color: #10b981; margin-bottom: 10px;">📈 Interactive Charts</h4>
+                <p style="color: #a0a0a0; margin: 0; line-height: 1.6;">
+                    Zoom, pan, and explore data with professional Plotly visualizations.
+                </p>
+            </div>
+
+            <div>
+                <h4 style="color: #10b981; margin-bottom: 10px;">🎓 Educational Content</h4>
+                <p style="color: #a0a0a0; margin: 0; line-height: 1.6;">
+                    Learn what indicators mean and how they impact markets and the economy.
+                </p>
+            </div>
+
+            <div>
+                <h4 style="color: #10b981; margin-bottom: 10px;">⚡ Fast & Responsive</h4>
+                <p style="color: #a0a0a0; margin: 0; line-height: 1.6;">
+                    Optimized performance with caching and mobile-friendly design.
+                </p>
+            </div>
+        </div>
+    </div>
+
+<!-- CTA Section -->
+    <div style="background: linear-gradient(135deg, #9333ea 0%, #6b21a8 100%);
+                color: white;
+                padding: 50px 40px;
+                border-radius: 16px;
+                text-align: center;
+                box-shadow: 0 8px 16px rgba(147, 51, 234, 0.3);
+                position: relative;
+                overflow: hidden;">
+
+        <div style="position: absolute; top: -100px; right: -100px; width: 300px; height: 300px;
+                    background: radial-gradient(circle, rgba(255,255,255,0.1), transparent);
+                    border-radius: 50%;"></div>
+
+        <div style="position: relative; z-index: 1;">
+            <h2 style="font-size: 2.2rem; margin-bottom: 20px;">Ready to Start Tracking?</h2>
+            <p style="font-size: 1.2rem; margin-bottom: 30px; opacity: 0.95;">
+                Explore the dashboard and stay informed about the U.S. economy
+            </p>
+            <a href="/dashboard" class="button-link" style="background: white; color: #9333ea; font-size: 1.1rem; padding: 14px 28px;">
+                Go to Dashboard →
+            </a>
+        </div>
+    </div>
+
+    <style>
+    /* Add hover effects to feature cards */
+        div[onclick]:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px rgba(147, 51, 234, 0.3);
+        }
+    </style>
+
+{% endblock %}

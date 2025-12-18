@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Economic Dashboard - {{ indicator if indicator else "Track Key Economic Indicators" }}</title>
+        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+        <style>
+            :root {
+                --primary-purple: #9333ea;
+                --dark-purple: #6b21a8;
+                --light-purple: #a855f7;
+                --accent-green: #10b981;
+                --dark-green: #059669;
+                --bg-black: #0a0a0a;
+                --bg-dark: #1a1a1a;
+                --bg-card: #1f1f1f;
+                --text-primary: #ffffff;
+                --text-secondary: #a0a0a0;
+                --border-color: #2a2a2a;
+            }
+
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+                background: linear-gradient(135deg, var(--bg-black) 0%, #1a0a2e 100%);
+                color: var(--text-primary);
+                min-height: 100vh;
+                line-height: 1.6;
+            }
+
+            /* Navigation */
+            nav {
+                background: rgba(26, 26, 26, 0.95);
+                backdrop-filter: blur(10px);
+                padding: 0;
+                position: sticky;
+                top: 0;
+                z-index: 1000;
+                border-bottom: 1px solid var(--border-color);
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            }
+
+            .nav-container {
+                max-width: 1400px;
+                margin: 0 auto;
+                display: flex;
+                align-items: center;
+                padding: 0 20px;
+            }
+
+            .nav-logo {
+                font-size: 1.5rem;
+                font-weight: 700;
+                background: linear-gradient(135deg, var(--primary-purple), var(--accent-green));
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                padding: 20px 0;
+                margin-right: 40px;
+            }
+
+            .nav-links {
+                display: flex;
+                gap: 5px;
+                flex: 1;
+                flex-wrap: wrap;
+            }
+
+            nav a {
+                color: var(--text-secondary);
+                text-decoration: none;
+                padding: 20px 16px;
+                transition: all 0.3s ease;
+                font-weight: 500;
+                font-size: 0.95rem;
+                position: relative;
+                border-bottom: 3px solid transparent;
+            }
+
+            nav a:hover {
+                color: var(--text-primary);
+                background: rgba(147, 51, 234, 0.1);
+                border-bottom-color: var(--primary-purple);
+            }
+
+            /* Main Content */
+            .container {
+                max-width: 1400px;
+                margin: 0 auto;
+                padding: 40px 20px;
+            }
+
+            h1 {
+                text-align: center;
+                font-size: 2.5rem;
+                font-weight: 700;
+                margin-bottom: 10px;
+                background: linear-gradient(135deg, var(--primary-purple), var(--light-purple));
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+            }
+
+            h2 {
+                font-size: 2rem;
+                font-weight: 600;
+                margin-bottom: 20px;
+                color: var(--text-primary);
+            }
+
+            h3 {
+                font-size: 1.5rem;
+                font-weight: 600;
+                margin-bottom: 15px;
+                color: var(--text-primary);
+            }
+
+            h4 {
+                font-size: 1.2rem;
+                font-weight: 600;
+                color: var(--text-primary);
+            }
+
+            /* Cards */
+            .card {
+                background: var(--bg-card);
+                border: 1px solid var(--border-color);
+                border-radius: 12px;
+                padding: 30px;
+                margin-bottom: 30px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+                transition: transform 0.2s, box-shadow 0.2s;
+            }
+
+            .card:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 12px rgba(147, 51, 234, 0.2);
+            }
+
+            /* Tables */
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                background: var(--bg-card);
+                border-radius: 8px;
+                overflow: hidden;
+                margin-bottom: 20px;
+            }
+
+            thead {
+                background: linear-gradient(135deg, var(--dark-purple), var(--primary-purple));
+            }
+
+            th,
+            td {
+                border: 1px solid var(--border-color);
+                padding: 16px;
+                text-align: right;
+                font-family: 'Inter', monospace;
+            }
+
+            th {
+                font-weight: 600;
+                text-align: left;
+                color: white;
+            }
+
+            td {
+                color: var(--text-secondary);
+            }
+
+            tbody tr {
+                transition: background 0.2s;
+            }
+
+            tbody tr:hover {
+                background: rgba(147, 51, 234, 0.05);
+            }
+
+            /* Charts */
+            .chart-container {
+                width: 100%;
+                max-width: 100%;
+                margin: 20px auto;
+                height: 500px;
+                background: var(--bg-card);
+                border-radius: 12px;
+                padding: 20px;
+                border: 1px solid var(--border-color);
+            }
+
+            /* Buttons */
+            button {
+                padding: 10px 20px;
+                margin: 5px;
+                border-radius: 8px;
+                cursor: pointer;
+                border: 1px solid var(--primary-purple);
+                background: transparent;
+                color: var(--primary-purple);
+                font-weight: 500;
+                font-family: 'Inter', sans-serif;
+                transition: all 0.3s ease;
+                font-size: 0.95rem;
+            }
+
+            button:hover {
+                background: var(--primary-purple);
+                color: white;
+                transform: translateY(-1px);
+                box-shadow: 0 4px 8px rgba(147, 51, 234, 0.3);
+            }
+
+            button:active {
+                transform: translateY(0);
+            }
+
+            #controls {
+                margin-bottom: 20px;
+                display: flex;
+                gap: 10px;
+                flex-wrap: wrap;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+                background: var(--bg-card);
+                border-radius: 12px;
+                border: 1px solid var(--border-color);
+            }
+
+            /* Info Boxes */
+            .info-box {
+                margin-bottom: 30px;
+                padding: 20px;
+                border-left: 4px solid var(--accent-green);
+                border-radius: 8px;
+                background: rgba(16, 185, 129, 0.1);
+                color: var(--text-primary);
+            }
+
+            /* Links */
+            a {
+                color: var(--light-purple);
+                transition: color 0.3s;
+            }
+
+            a:hover {
+                color: var(--accent-green);
+            }
+
+            a.button-link {
+                display: inline-block;
+                text-decoration: none;
+                padding: 12px 24px;
+                border-radius: 8px;
+                background: linear-gradient(135deg, var(--primary-purple), var(--dark-purple));
+                color: white;
+                transition: all 0.3s;
+                font-weight: 500;
+                border: none;
+            }
+
+            a.button-link:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 12px rgba(147, 51, 234, 0.4);
+                background: linear-gradient(135deg, var(--light-purple), var(--primary-purple));
+            }
+
+            /* Checkboxes and Labels */
+            label {
+                color: var(--text-primary);
+                font-weight: 500;
+                cursor: pointer;
+                transition: color 0.3s;
+            }
+
+            label:hover {
+                color: var(--light-purple);
+            }
+
+            input[type="checkbox"] {
+                cursor: pointer;
+                width: 18px;
+                height: 18px;
+                margin-right: 8px;
+                accent-color: var(--primary-purple);
+            }
+
+            /* Success/Warning/Error badges */
+            .badge {
+                display: inline-block;
+                padding: 6px 12px;
+                border-radius: 20px;
+                font-size: 0.85rem;
+                font-weight: 600;
+            }
+
+            .badge-success {
+                background: rgba(16, 185, 129, 0.2);
+                color: var(--accent-green);
+                border: 1px solid var(--accent-green);
+            }
+
+            .badge-warning {
+                background: rgba(245, 158, 11, 0.2);
+                color: #f59e0b;
+                border: 1px solid #f59e0b;
+            }
+
+            .badge-error {
+                background: rgba(239, 68, 68, 0.2);
+                color: #ef4444;
+                border: 1px solid #ef4444;
+            }
+
+            /* Mobile responsiveness */
+            @media (max-width: 768px) {
+                .container {
+                    padding: 20px 15px;
+                }
+
+                .nav-container {
+                    flex-direction: column;
+                    padding: 10px;
+                }
+
+                .nav-logo {
+                    margin-right: 0;
+                    margin-bottom: 10px;
+                }
+
+                .nav-links {
+                    flex-direction: column;
+                    width: 100%;
+                    gap: 0;
+                }
+
+                nav a {
+                    width: 100%;
+                    text-align: center;
+                    padding: 15px;
+                    border-bottom: 1px solid var(--border-color);
+                }
+
+                h1 {
+                    font-size: 1.8rem;
+                }
+
+                h2 {
+                    font-size: 1.5rem;
+                }
+
+                .chart-container {
+                    height: 350px;
+                    padding: 10px;
+                }
+
+                table {
+                    font-size: 0.85rem;
+                }
+
+                th,
+                td {
+                    padding: 10px 8px;
+                }
+
+                button {
+                    padding: 8px 16px;
+                    font-size: 0.9rem;
+                }
+
+                .card {
+                    padding: 20px;
+                }
+            }
+
+            /* Scrollbar Styling */
+            ::-webkit-scrollbar {
+                width: 10px;
+            }
+
+            ::-webkit-scrollbar-track {
+                background: var(--bg-dark);
+            }
+
+            ::-webkit-scrollbar-thumb {
+                background: var(--primary-purple);
+                border-radius: 5px;
+            }
+
+            ::-webkit-scrollbar-thumb:hover {
+                background: var(--light-purple);
+            }
+        </style>
+    </head>
+
+    <body>
+        <nav>
+            <div class="nav-container">
+                <div class="nav-logo">📊 EconDash</div>
+                <div class="nav-links">
+                    <a href="/dashboard">Dashboard</a>
+                    <a href="/gdp">GDP</a>
+                    <a href="/unemployment">Unemployment</a>
+                    <a href="/cpi">CPI</a>
+                    <a href="/fedfunds">Fed Funds</a>
+                    <a href="/sp500">S&P 500</a>
+                    <a href="/yield-curve">Yield Curve</a>
+                    <a href="/compare">Compare</a>
+                    <a href="/calendar">Calendar</a>
+                </div>
+            </div>
+        </nav>
+
+        <div class="container">
+            <h1>{{ indicator if indicator else "Economic Dashboard" }}</h1>
+            {% block content %}{% endblock %}
+        </div>
+    </body>
+
+</html>

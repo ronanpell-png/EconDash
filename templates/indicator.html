@@ -1,0 +1,179 @@
+{% extends "layout.html" %}
+{% block content %}
+
+    <p style="text-align: center; color: #a0a0a0; margin-bottom: 30px; font-size: 1.1rem;">
+        Historical data and trends
+    </p>
+
+    <div id="controls">
+        <button id="btn-most" style="background: linear-gradient(135deg, #9333ea, #6b21a8); color: white; border: none;">
+            Most Recent 10
+        </button>
+        <button id="btn-more">See 10 More</button>
+        <button id="btn-less">See 10 Less</button>
+        <button id="btn-all">See All</button>
+        <button onclick="downloadCSV()" style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: none;">
+            📥 Download CSV
+        </button>
+        <div style="margin-left: auto; font-size: 0.95em; color: #a0a0a0; padding: 10px 20px; background: rgba(147, 51, 234, 0.1); border-radius: 8px;">
+            Showing <span id="visible-count" style="color: #10b981; font-weight: 600;">0</span> of {{ rows|length }}
+        </div>
+    </div>
+
+    <div class="chart-container" id="chart"></div>
+
+    <div class="card">
+        <h3 style="margin-bottom: 20px;">📊 Data Table</h3>
+        <table id="table">
+            <thead>
+                <tr>
+                    <th style="text-align: left;">Date</th>
+                    <th>Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for date, value in rows %}
+                    <tr data-index="{{ loop.index0 }}">
+                        <td style="text-align: left; color: #a0a0a0;">{{ date }}</td>
+                        <td style="color: #ffffff; font-weight: 500;">
+                            {{ value if value is not none else 'N/A' }}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const initialVisible = 10;
+            const tbody = document.querySelector('#table tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            const total = rows.length;
+            let currentVisible = Math.min(initialVisible, total);
+            const visibleCountEl = document.getElementById('visible-count');
+
+            const renderRows = () => {
+                rows.forEach((r, i) => r.style.display = i < currentVisible ? '' : 'none');
+                visibleCountEl.textContent = currentVisible;
+            };
+
+            const parseValue = (text) => {
+                if (!text || text.trim() === 'N/A') return null;
+                return Number(text.replace(/,/g, '')) || null;
+            };
+
+            const updateChart = () => {
+                const dates = [],
+                      values = [];
+                for (let i = 0; i < currentVisible && i < rows.length; i++) {
+                    const tds = rows[i].querySelectorAll('td');
+                    dates.push(tds[0].textContent.trim());
+                    values.push(parseValue(tds[1].textContent.trim()));
+                }
+
+                const data = [{
+                    x: dates.reverse(),
+                    y: values.reverse(),
+                    type: 'scatter',
+                    mode: 'lines+markers',
+                    line: {
+                        color: '#9333ea',
+                        width: 2,
+                        shape: 'spline'
+                    },
+                    marker: {
+                        color: '#a855f7',
+                        size: 6,
+                        line: {
+                            color: '#10b981',
+                            width: 1
+                        }
+                    },
+                    hovertemplate: '<b>%{x}</b><br>Value: %{y}<extra></extra>'
+                }];
+
+                const layout = {
+                    xaxis: {
+                        title: 'Date',
+                        gridcolor: '#2a2a2a',
+                        color: '#a0a0a0'
+                    },
+                    yaxis: {
+                        title: '{{ indicator }}',
+                        gridcolor: '#2a2a2a',
+                        color: '#a0a0a0'
+                    },
+                    hovermode: 'closest',
+                    autosize: true,
+                    plot_bgcolor: '#1a1a1a',
+                    paper_bgcolor: '#1f1f1f',
+                    font: {
+                        color: '#a0a0a0',
+                        family: 'Inter, sans-serif'
+                    },
+                    margin: {
+                        t: 20,
+                        b: 60,
+                        l: 70,
+                        r: 20
+                    }
+                };
+
+                Plotly.react('chart', data, layout, {
+                    responsive: true,
+                    displayModeBar: true,
+                    scrollZoom: true,
+                    modeBarButtonsToRemove: ['lasso2d', 'select2d']
+                });
+            };
+
+            document.getElementById('btn-most').onclick = () => {
+                currentVisible = Math.min(initialVisible, total);
+                renderRows();
+                updateChart();
+            };
+
+            document.getElementById('btn-more').onclick = () => {
+                currentVisible = Math.min(currentVisible + 10, total);
+                renderRows();
+                updateChart();
+            };
+
+            document.getElementById('btn-less').onclick = () => {
+                currentVisible = Math.max(initialVisible, currentVisible - 10);
+                renderRows();
+                updateChart();
+            };
+
+            document.getElementById('btn-all').onclick = () => {
+                currentVisible = total;
+                renderRows();
+                updateChart();
+            };
+
+            renderRows();
+            updateChart();
+            window.addEventListener('resize', () => Plotly.Plots.resize(document.getElementById('chart')));
+        });
+
+        function downloadCSV() {
+            const rows = Array.from(document.querySelectorAll('#table tbody tr:not([style*="display: none"])'));
+            let csv = 'Date,Value\n';
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                csv += `${cells[0].textContent},${cells[1].textContent}\n`;
+            });
+
+            const blob = new Blob([csv], {
+                type: 'text/csv'
+            });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'economic_data.csv';
+            a.click();
+        }
+    </script>
+
+{% endblock %}

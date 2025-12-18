@@ -1,0 +1,200 @@
+{% extends "layout.html" %}
+{% block content %}
+
+    <p style="text-align: center; color: #a0a0a0; margin-bottom: 40px; font-size: 1.1rem;">
+        Real-time tracking of key U.S. economic indicators
+    </p>
+
+<!-- Indicator Cards Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; margin-bottom: 50px;">
+        {% for item in summary %}
+            <div style="background: linear-gradient(135deg, rgba(147, 51, 234, 0.1) 0%, rgba(107, 33, 168, 0.1) 100%);
+                        border: 1px solid rgba(147, 51, 234, 0.3);
+                        border-radius: 16px;
+                        padding: 25px;
+                        position: relative;
+                        overflow: hidden;
+                        transition: all 0.3s ease;">
+
+        <!-- Decorative gradient overlay -->
+                <div style="position: absolute; top: 0; right: 0; width: 100px; height: 100px;
+                            background: radial-gradient(circle, rgba(147, 51, 234, 0.3) 0%, transparent 70%);
+                            border-radius: 0 16px 0 0;"></div>
+
+                <h3 style="margin: 0 0 15px 0; font-size: 1.1em; color: #a0a0a0; font-weight: 500; position: relative; z-index: 1;">
+                    {{ item.name }}
+                </h3>
+
+                {% if item.current is not none %}
+                    <div style="font-size: 2.8em; font-weight: 700; margin: 15px 0;
+                                background: linear-gradient(135deg, #ffffff 0%, #a855f7 100%);
+                                -webkit-background-clip: text;
+                                -webkit-text-fill-color: transparent;
+                                position: relative; z-index: 1;">
+                        {{ "%.2f"|format(item.current) }}
+                    </div>
+
+                    {% if item.change is not none %}
+                        <div style="display: flex; align-items: center; margin-top: 15px; position: relative; z-index: 1;">
+                            {% if item.trend == 'up' %}
+                                <span style="font-size: 1.8em; margin-right: 8px; color: #10b981;">↑</span>
+                                <span style="font-size: 1.1em; color: #10b981; font-weight: 600;">
+                                    +{{ "%.2f"|format(item.change) }} ({{ "%.2f"|format(item.pct_change) }}%)
+                                </span>
+                            {% elif item.trend == 'down' %}
+                                <span style="font-size: 1.8em; margin-right: 8px; color: #ef4444;">↓</span>
+                                <span style="font-size: 1.1em; color: #ef4444; font-weight: 600;">
+                                    {{ "%.2f"|format(item.change) }} ({{ "%.2f"|format(item.pct_change) }}%)
+                                </span>
+                            {% else %}
+                                <span style="font-size: 1.1em; color: #a0a0a0; font-weight: 600;">No change</span>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+
+                    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(147, 51, 234, 0.3);
+                                font-size: 0.9em; color: #666; position: relative; z-index: 1;">
+                        <span style="color: #a0a0a0;">Updated:</span> {{ item.date }}
+                    </div>
+
+                    {% set url_map = {
+                    'GDP': 'gdp',
+                    'UNRATE': 'unemployment',
+                    'CPI': 'cpi',
+                    'FEDFUNDS': 'fedfunds',
+                    'SP500': 'sp500'
+                    } %}
+
+                    {% if url_map[item.key] is defined %}
+                        <a href="/{{ url_map[item.key] }}" style="display: inline-block; margin-top: 20px; padding: 10px 20px;
+                                                                  background: linear-gradient(135deg, #9333ea, #6b21a8);
+                                                                  border-radius: 8px; color: white; text-decoration: none; font-size: 0.9em;
+                                                                  transition: all 0.3s ease; font-weight: 500; position: relative; z-index: 1;">
+                            View Details →
+                        </a>
+                    {% endif %}
+
+                {% else %}
+                    <div style="font-size: 1.2em; color: #666; position: relative; z-index: 1;">Data not available</div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+
+<!-- Yield Curve Section -->
+    <div class="card" style="margin-top: 50px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
+            <div>
+                <h2 style="margin: 0; display: flex; align-items: center; gap: 10px;">
+                    📈 Current Yield Curve
+                </h2>
+                <p style="color: #a0a0a0; margin-top: 5px;">U.S. Treasury bond yields across maturities</p>
+            </div>
+
+            {% if is_inverted %}
+                <span class="badge badge-error" style="font-size: 1rem; padding: 8px 16px;">
+                    ⚠️ Inverted ({{ "%.2f"|format(spread_2_10) }}%)
+                </span>
+            {% else %}
+                <span class="badge badge-success" style="font-size: 1rem; padding: 8px 16px;">
+                    ✓ Normal ({{ "%.2f"|format(spread_2_10) }}%)
+                </span>
+            {% endif %}
+        </div>
+
+        {% if is_inverted %}
+            <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; border-radius: 8px; padding: 20px; margin-bottom: 25px;">
+                <p style="margin: 0; color: #ef4444; font-weight: 500;">
+                    <strong>⚠️ Yield Curve Inversion Detected</strong><br>
+                    <span style="font-weight: 400; font-size: 0.95em;">
+                        Historically, an inverted yield curve has preceded economic recessions. The 2Y-10Y spread is currently {{ "%.2f"|format(spread_2_10) }}%.
+                    </span>
+                </p>
+            </div>
+        {% else %}
+            <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid #10b981; border-radius: 8px; padding: 20px; margin-bottom: 25px;">
+                <p style="margin: 0; color: #10b981; font-weight: 500;">
+                    <strong>✓ Normal Yield Curve</strong><br>
+                    <span style="font-weight: 400; font-size: 0.95em;">
+                        The yield curve is upward sloping, indicating healthy economic expectations. The 2Y-10Y spread is {{ "%.2f"|format(spread_2_10) }}%.
+                    </span>
+                </p>
+            </div>
+        {% endif %}
+
+        <div id="dashboard-yield-curve" style="width:100%; height:450px;"></div>
+
+        <div style="text-align: center; margin-top: 25px;">
+            <a href="/yield-curve" class="button-link">
+                View Full Yield Curve Analysis →
+            </a>
+        </div>
+    </div>
+
+    <script>
+        const yieldCurveData = {{ yield_curve_data | tojson }};
+
+        if (yieldCurveData.length > 0) {
+            const maturities = yieldCurveData.map(d => d.maturity);
+            const yields = yieldCurveData.map(d => d.yield);
+            const labels = yieldCurveData.map(d => d.maturity_name);
+
+            const trace = {
+                x: maturities,
+                y: yields,
+                mode: 'lines+markers',
+                type: 'scatter',
+                name: 'Treasury Yields',
+                line: {
+                    color: '#9333ea',
+                    width: 3,
+                    shape: 'spline'
+                },
+                marker: {
+                    size: 10,
+                    color: '#a855f7',
+                    line: {
+                        color: '#10b981',
+                        width: 2
+                    }
+                },
+                text: labels,
+                hovertemplate: '<b>%{text}</b><br>Yield: %{y:.2f}%<extra></extra>'
+            };
+
+            const layout = {
+                xaxis: {
+                    title: 'Maturity (Years)',
+                    type: 'log',
+                    gridcolor: '#2a2a2a',
+                    color: '#a0a0a0'
+                },
+                yaxis: {
+                    title: 'Yield (%)',
+                    gridcolor: '#2a2a2a',
+                    color: '#a0a0a0'
+                },
+                margin: {
+                    t: 20,
+                    b: 60,
+                    l: 60,
+                    r: 20
+                },
+                plot_bgcolor: '#1a1a1a',
+                paper_bgcolor: '#1f1f1f',
+                hovermode: 'closest',
+                autosize: true,
+                font: {
+                    color: '#a0a0a0',
+                    family: 'Inter, sans-serif'
+                }
+            };
+
+            Plotly.react('dashboard-yield-curve', [trace], layout, {
+                responsive: true,
+                displayModeBar: false
+            });
+        }
+    </script>
+
+{% endblock %}

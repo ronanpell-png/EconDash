@@ -1,0 +1,465 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<p style="text-align: center; color: #a0a0a0; margin-bottom: 30px; font-size: 1.1rem;">
+    Compare economic indicators using statistical normalization
+</p>
+
+<!-- Comparison Mode Selector -->
+<div style="background: linear-gradient(135deg, rgba(147, 51, 234, 0.1), rgba(16, 185, 129, 0.1));
+            border: 1px solid rgba(147, 51, 234, 0.3);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;">
+    <h3 style="margin: 0 0 20px 0; color: #a855f7; text-align: center;">Select Comparison Method</h3>
+    <div style="display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; margin-bottom: 20px;">
+        <button onclick="setNormalizationMode('zscore')" data-mode="zscore"
+                style="background: linear-gradient(135deg, #9333ea, #6b21a8); color: white; border: none; padding: 12px 24px;">
+            Z-Score (Statistical)
+        </button>
+        <button onclick="setNormalizationMode('index')" data-mode="index"
+                style="padding: 12px 24px;">
+            Index to 100
+        </button>
+        <button onclick="setNormalizationMode('percent')" data-mode="percent"
+                style="padding: 12px 24px;">
+            % Change from Start
+        </button>
+    </div>
+
+    <!-- Mode Explanation -->
+    <div id="mode-explanation" style="background: rgba(147, 51, 234, 0.1); padding: 20px; border-radius: 8px; border-left: 4px solid #9333ea;">
+        <p style="margin: 0; color: #a0a0a0; line-height: 1.8;">
+            <strong style="color: #a855f7;">Z-Score:</strong> Shows how many standard deviations each indicator is from its historical average.
+            A Z-score of +2 means the indicator is 2 standard deviations above average (unusually high).
+            This method is ideal for comparing indicators with different volatility patterns.
+        </p>
+    </div>
+</div>
+
+<!-- Indicator Selection -->
+<div style="background: #1f1f1f;
+            border: 1px solid #2a2a2a;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 25px;">
+    <h3 style="margin: 0 0 25px 0; color: #ffffff; text-align: center;">Select Indicators to Compare</h3>
+    <div id="checkboxes" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+        <label style="display: flex; align-items: center; gap: 12px; padding: 16px 20px;
+                      background: rgba(147, 51, 234, 0.08); border-radius: 10px;
+                      border: 2px solid rgba(147, 51, 234, 0.3);
+                      cursor: pointer; transition: all 0.3s ease;">
+            <input type="checkbox" id="gdp-check" checked onchange="updateComparisonChart()"
+                   style="width: 22px; height: 22px; cursor: pointer;">
+            <span style="color: #9333ea; font-size: 1.8em; line-height: 1;">●</span>
+            <span style="font-weight: 600; color: #ffffff; font-size: 1.05rem;">GDP</span>
+        </label>
+
+        <label style="display: flex; align-items: center; gap: 12px; padding: 16px 20px;
+                      background: rgba(245, 158, 11, 0.08); border-radius: 10px;
+                      border: 2px solid rgba(245, 158, 11, 0.3);
+                      cursor: pointer; transition: all 0.3s ease;">
+            <input type="checkbox" id="unrate-check" checked onchange="updateComparisonChart()"
+                   style="width: 22px; height: 22px; cursor: pointer;">
+            <span style="color: #f59e0b; font-size: 1.8em; line-height: 1;">●</span>
+            <span style="font-weight: 600; color: #ffffff; font-size: 1.05rem;">Unemployment</span>
+        </label>
+
+        <label style="display: flex; align-items: center; gap: 12px; padding: 16px 20px;
+                      background: rgba(16, 185, 129, 0.08); border-radius: 10px;
+                      border: 2px solid rgba(16, 185, 129, 0.3);
+                      cursor: pointer; transition: all 0.3s ease;">
+            <input type="checkbox" id="cpi-check" checked onchange="updateComparisonChart()"
+                   style="width: 22px; height: 22px; cursor: pointer;">
+            <span style="color: #10b981; font-size: 1.8em; line-height: 1;">●</span>
+            <span style="font-weight: 600; color: #ffffff; font-size: 1.05rem;">CPI</span>
+        </label>
+
+        <label style="display: flex; align-items: center; gap: 12px; padding: 16px 20px;
+                      background: rgba(168, 85, 247, 0.08); border-radius: 10px;
+                      border: 2px solid rgba(168, 85, 247, 0.3);
+                      cursor: pointer; transition: all 0.3s ease;">
+            <input type="checkbox" id="fedfunds-check" checked onchange="updateComparisonChart()"
+                   style="width: 22px; height: 22px; cursor: pointer;">
+            <span style="color: #a855f7; font-size: 1.8em; line-height: 1;">●</span>
+            <span style="font-weight: 600; color: #ffffff; font-size: 1.05rem;">Fed Funds</span>
+        </label>
+
+        <label style="display: flex; align-items: center; gap: 12px; padding: 16px 20px;
+                      background: rgba(59, 130, 246, 0.08); border-radius: 10px;
+                      border: 2px solid rgba(59, 130, 246, 0.3);
+                      cursor: pointer; transition: all 0.3s ease;">
+            <input type="checkbox" id="sp500-check" checked onchange="updateComparisonChart()"
+                   style="width: 22px; height: 22px; cursor: pointer;">
+            <span style="color: #3b82f6; font-size: 1.8em; line-height: 1;">●</span>
+            <span style="font-weight: 600; color: #ffffff; font-size: 1.05rem;">S&P 500</span>
+        </label>
+    </div>
+</div>
+
+<!-- Time Range Buttons -->
+<div style="background: #1f1f1f;
+            border: 1px solid #2a2a2a;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;">
+    <h3 style="margin: 0 0 25px 0; color: #ffffff; text-align: center;">Select Time Range</h3>
+    <div id="time-range-buttons" style="display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
+        <button onclick="setView('1year')" data-view="1year">
+            Last Year
+        </button>
+        <button onclick="setView('5year')" data-view="5year">
+            Last 5 Years
+        </button>
+        <button onclick="setView('10year')" data-view="10year">
+            Last 10 Years
+        </button>
+        <button onclick="setView('all')" data-view="all"
+                style="background: linear-gradient(135deg, #9333ea, #6b21a8); color: white; border: none;">
+            All Time
+        </button>
+    </div>
+</div>
+
+<!-- Chart -->
+<div class="chart-container" id="chart" style="height: 600px;"></div>
+
+<!-- Z-Score Reference Guide -->
+<div id="zscore-guide" style="background: linear-gradient(135deg, rgba(147, 51, 234, 0.1), rgba(16, 185, 129, 0.05));
+            border: 1px solid rgba(147, 51, 234, 0.3);
+            border-radius: 12px;
+            padding: 30px;
+            margin-top: 30px;">
+    <h3 style="margin: 0 0 25px 0; color: #a855f7; display: flex; align-items: center; gap: 10px;">
+        📊 Understanding Z-Scores
+    </h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 25px;">
+        <div style="background: rgba(16, 185, 129, 0.1); padding: 20px; border-radius: 10px; border-left: 4px solid #10b981;">
+            <strong style="color: #10b981; font-size: 1.1rem; display: block; margin-bottom: 8px;">Z = +3 or higher</strong>
+            <p style="color: #a0a0a0; margin: 0; line-height: 1.6;">
+                Extremely high - rarely occurs (top 0.1%)
+            </p>
+        </div>
+        <div style="background: rgba(16, 185, 129, 0.1); padding: 20px; border-radius: 10px; border-left: 4px solid #10b981;">
+            <strong style="color: #10b981; font-size: 1.1rem; display: block; margin-bottom: 8px;">Z = +2 to +3</strong>
+            <p style="color: #a0a0a0; margin: 0; line-height: 1.6;">
+                Very high - above 95% of historical values
+            </p>
+        </div>
+        <div style="background: rgba(245, 158, 11, 0.1); padding: 20px; border-radius: 10px; border-left: 4px solid #f59e0b;">
+            <strong style="color: #f59e0b; font-size: 1.1rem; display: block; margin-bottom: 8px;">Z = +1 to +2</strong>
+            <p style="color: #a0a0a0; margin: 0; line-height: 1.6;">
+                Above average - higher than usual
+            </p>
+        </div>
+        <div style="background: rgba(147, 51, 234, 0.1); padding: 20px; border-radius: 10px; border-left: 4px solid #9333ea;">
+            <strong style="color: #9333ea; font-size: 1.1rem; display: block; margin-bottom: 8px;">Z = -1 to +1</strong>
+            <p style="color: #a0a0a0; margin: 0; line-height: 1.6;">
+                Normal range - about 68% of all values
+            </p>
+        </div>
+        <div style="background: rgba(245, 158, 11, 0.1); padding: 20px; border-radius: 10px; border-left: 4px solid #f59e0b;">
+            <strong style="color: #f59e0b; font-size: 1.1rem; display: block; margin-bottom: 8px;">Z = -2 to -1</strong>
+            <p style="color: #a0a0a0; margin: 0; line-height: 1.6;">
+                Below average - lower than usual
+            </p>
+        </div>
+        <div style="background: rgba(239, 68, 68, 0.1); padding: 20px; border-radius: 10px; border-left: 4px solid #ef4444;">
+            <strong style="color: #ef4444; font-size: 1.1rem; display: block; margin-bottom: 8px;">Z = -3 or lower</strong>
+            <p style="color: #a0a0a0; margin: 0; line-height: 1.6;">
+                Extremely low - crisis levels (bottom 0.1%)
+            </p>
+        </div>
+    </div>
+    <div style="background: rgba(147, 51, 234, 0.1); padding: 20px; border-radius: 8px;">
+        <p style="margin: 0; color: #a0a0a0; line-height: 1.8;">
+            <strong style="color: #a855f7;">Why Z-Score?</strong> Unlike indexing to 100, Z-scores account for volatility.
+            An indicator that's normally stable (like GDP) having a Z-score of +2 is more significant than
+            a volatile indicator (like S&P 500) hitting +2.
+        </p>
+    </div>
+</div>
+
+<!-- Legend Explanation -->
+<div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(147, 51, 234, 0.05));
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 12px;
+            padding: 30px;
+            margin-top: 30px;">
+    <h3 style="margin: 0 0 25px 0; color: #10b981; display: flex; align-items: center; gap: 10px;">
+        📈 Indicator Reference
+    </h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px;">
+        <div style="background: rgba(147, 51, 234, 0.1); padding: 20px; border-radius: 10px; border-left: 4px solid #9333ea;">
+            <strong style="color: #9333ea; font-size: 1.1rem; display: block; margin-bottom: 8px;">GDP (Gross Domestic Product)</strong>
+            <p style="color: #a0a0a0; margin: 0; line-height: 1.6;">
+                Total economic output. Positive Z-score = strong growth period.
+            </p>
+        </div>
+        <div style="background: rgba(245, 158, 11, 0.1); padding: 20px; border-radius: 10px; border-left: 4px solid #f59e0b;">
+            <strong style="color: #f59e0b; font-size: 1.1rem; display: block; margin-bottom: 8px;">Unemployment Rate</strong>
+            <p style="color: #a0a0a0; margin: 0; line-height: 1.6;">
+                Negative Z-score = unusually low unemployment (strong economy).
+            </p>
+        </div>
+        <div style="background: rgba(16, 185, 129, 0.1); padding: 20px; border-radius: 10px; border-left: 4px solid #10b981;">
+            <strong style="color: #10b981; font-size: 1.1rem; display: block; margin-bottom: 8px;">CPI (Consumer Price Index)</strong>
+            <p style="color: #a0a0a0; margin: 0; line-height: 1.6;">
+                Positive Z-score = higher than normal inflation period.
+            </p>
+        </div>
+        <div style="background: rgba(168, 85, 247, 0.1); padding: 20px; border-radius: 10px; border-left: 4px solid #a855f7;">
+            <strong style="color: #a855f7; font-size: 1.1rem; display: block; margin-bottom: 8px;">Federal Funds Rate</strong>
+            <p style="color: #a0a0a0; margin: 0; line-height: 1.6;">
+                Positive Z-score = Fed tightening (fighting inflation).
+            </p>
+        </div>
+        <div style="background: rgba(59, 130, 246, 0.1); padding: 20px; border-radius: 10px; border-left: 4px solid #3b82f6;">
+            <strong style="color: #3b82f6; font-size: 1.1rem; display: block; margin-bottom: 8px;">S&P 500</strong>
+            <p style="color: #a0a0a0; margin: 0; line-height: 1.6;">
+                Positive Z-score = bull market, negative = bear market or correction.
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+const rawData = {
+    gdp: {{ gdp|tojson }},
+    unrate: {{ unrate|tojson }},
+    cpi: {{ cpi|tojson }},
+    fedfunds: {{ fedfunds|tojson }},
+    sp500: {{ sp500|tojson }}
+};
+
+let currentView = 'all';
+let currentMode = 'zscore';
+
+// Normalization functions
+function calculateZScore(data) {
+    if (!data || data.length === 0) return [];
+
+    const valid = data.filter(d => d && d[1] !== null && d[1] !== undefined && !isNaN(d[1]));
+    if (valid.length < 2) return [];
+
+    const values = valid.map(d => d[1]);
+    const mean = values.reduce((a, b) => a + b, 0) / values.length;
+    const variance = values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / values.length;
+    const stdDev = Math.sqrt(variance);
+
+    if (stdDev === 0) return valid.map(d => [d[0], 0]);
+
+    return valid.map(d => [d[0], (d[1] - mean) / stdDev]);
+}
+
+function indexTo100(data) {
+    if (!data || data.length === 0) return [];
+    const valid = data.filter(d => d && d[1] !== null && d[1] !== undefined && !isNaN(d[1]));
+    if (!valid.length) return [];
+    const base = valid[valid.length - 1][1];
+    if (base === 0) return [];
+    return valid.map(d => [d[0], (d[1] / base) * 100]);
+}
+
+function percentChange(data) {
+    if (!data || data.length === 0) return [];
+    const valid = data.filter(d => d && d[1] !== null && d[1] !== undefined && !isNaN(d[1]));
+    if (!valid.length) return [];
+    const base = valid[valid.length - 1][1];
+    if (base === 0) return [];
+    return valid.map(d => [d[0], ((d[1] - base) / base) * 100]);
+}
+
+function normalizeData(data, mode) {
+    switch(mode) {
+        case 'zscore': return calculateZScore(data);
+        case 'index': return indexTo100(data);
+        case 'percent': return percentChange(data);
+        default: return calculateZScore(data);
+    }
+}
+
+function setNormalizationMode(mode) {
+    currentMode = mode;
+
+    // Update button styles
+    document.querySelectorAll('[data-mode]').forEach(btn => {
+        if (btn.dataset.mode === mode) {
+            btn.style.background = 'linear-gradient(135deg, #9333ea, #6b21a8)';
+            btn.style.color = 'white';
+            btn.style.border = 'none';
+        } else {
+            btn.style.background = 'transparent';
+            btn.style.color = '#9333ea';
+            btn.style.border = '1px solid #9333ea';
+        }
+    });
+
+    // Update explanation
+    const explanations = {
+        zscore: '<strong style="color: #a855f7;">Z-Score:</strong> Shows how many standard deviations each indicator is from its historical average. A Z-score of +2 means the indicator is 2 standard deviations above average (unusually high). This method is ideal for comparing indicators with different volatility patterns.',
+        index: '<strong style="color: #a855f7;">Index to 100:</strong> All indicators start at 100 at their earliest data point. This shows relative percentage growth over time. A value of 150 means a 50% increase from the starting point.',
+        percent: '<strong style="color: #a855f7;">% Change from Start:</strong> Shows percentage change from the beginning of the time period. Easier to understand than indexing - a value of +50% means the indicator grew by 50% from the start.'
+    };
+
+    document.getElementById('mode-explanation').querySelector('p').innerHTML = explanations[mode];
+
+    // Show/hide Z-score guide
+    document.getElementById('zscore-guide').style.display = mode === 'zscore' ? 'block' : 'none';
+
+    updateComparisonChart();
+}
+
+function setView(view) {
+    currentView = view;
+
+    document.querySelectorAll('#time-range-buttons button').forEach(btn => {
+        if (btn.dataset.view === view) {
+            btn.style.background = 'linear-gradient(135deg, #9333ea, #6b21a8)';
+            btn.style.color = 'white';
+            btn.style.border = 'none';
+        } else {
+            btn.style.background = 'transparent';
+            btn.style.color = '#9333ea';
+            btn.style.border = '1px solid #9333ea';
+        }
+    });
+
+    updateComparisonChart();
+}
+
+function filterByDateRange(data, view) {
+    if (!data || data.length === 0) return [];
+    if (view === 'all') return data;
+
+    const cutoff = new Date();
+    switch (view) {
+        case '1year': cutoff.setFullYear(cutoff.getFullYear() - 1); break;
+        case '5year': cutoff.setFullYear(cutoff.getFullYear() - 5); break;
+        case '10year': cutoff.setFullYear(cutoff.getFullYear() - 10); break;
+    }
+    return data.filter(d => new Date(d[0]) >= cutoff);
+}
+
+function updateComparisonChart() {
+    const traces = [];
+    const configs = [
+        ['gdp', 'GDP', '#9333ea'],
+        ['unrate', 'Unemployment', '#f59e0b'],
+        ['cpi', 'CPI', '#10b981'],
+        ['fedfunds', 'Fed Funds Rate', '#a855f7'],
+        ['sp500', 'S&P 500', '#3b82f6']
+    ];
+
+    for (const [key, name, color] of configs) {
+        const checkbox = document.getElementById(key + '-check');
+        if (checkbox && checkbox.checked) {
+            const filteredRaw = filterByDateRange(rawData[key], currentView);
+            const normalized = normalizeData(filteredRaw, currentMode);
+
+            if (normalized.length > 0) {
+                traces.push({
+                    x: normalized.map(d => d[0]),
+                    y: normalized.map(d => d[1]),
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: name,
+                    line: {
+                        color: color,
+                        width: 3,
+                        shape: 'spline'
+                    },
+                    connectgaps: false,
+                    hovertemplate: '<b>' + name + '</b><br>Date: %{x}<br>Value: %{y:.2f}<extra></extra>'
+                });
+            }
+        }
+    }
+
+    const yAxisTitles = {
+        zscore: 'Z-Score (Standard Deviations)',
+        index: 'Index Value (Base = 100)',
+        percent: 'Percent Change from Start (%)'
+    };
+
+    const chartTitles = {
+        zscore: 'Economic Indicators (Z-Score Normalized)',
+        index: 'Economic Indicators (Indexed to 100)',
+        percent: 'Economic Indicators (% Change from Start)'
+    };
+
+    const layout = {
+        title: {
+            text: chartTitles[currentMode],
+            font: { size: 20, color: '#ffffff', family: 'Inter, sans-serif' }
+        },
+        xaxis: {
+            title: 'Date',
+            showgrid: true,
+            gridcolor: '#2a2a2a',
+            color: '#a0a0a0'
+        },
+        yaxis: {
+            title: yAxisTitles[currentMode],
+            showgrid: true,
+            gridcolor: '#2a2a2a',
+            color: '#a0a0a0',
+            zeroline: true,
+            zerolinecolor: '#ffffff',
+            zerolinewidth: 2
+        },
+        hovermode: 'x unified',
+        legend: {
+            orientation: 'h',
+            x: 0.5,
+            xanchor: 'center',
+            y: -0.15,
+            font: { color: '#a0a0a0', size: 12 },
+            bgcolor: 'rgba(31, 31, 31, 0.8)',
+            bordercolor: '#2a2a2a',
+            borderwidth: 1
+        },
+        margin: { t: 80, b: 100, l: 90, r: 40 },
+        dragmode: 'zoom',
+        plot_bgcolor: '#1a1a1a',
+        paper_bgcolor: '#1f1f1f',
+        autosize: true,
+        font: {
+            color: '#a0a0a0',
+            family: 'Inter, sans-serif'
+        },
+        shapes: currentMode === 'zscore' ? [
+            // Reference lines at ±1, ±2, ±3 standard deviations
+            {type: 'line', xref: 'paper', x0: 0, x1: 1, y0: 1, y1: 1, line: {color: 'rgba(245, 158, 11, 0.3)', width: 1, dash: 'dot'}},
+            {type: 'line', xref: 'paper', x0: 0, x1: 1, y0: -1, y1: -1, line: {color: 'rgba(245, 158, 11, 0.3)', width: 1, dash: 'dot'}},
+            {type: 'line', xref: 'paper', x0: 0, x1: 1, y0: 2, y1: 2, line: {color: 'rgba(16, 185, 129, 0.3)', width: 1, dash: 'dot'}},
+            {type: 'line', xref: 'paper', x0: 0, x1: 1, y0: -2, y1: -2, line: {color: 'rgba(239, 68, 68, 0.3)', width: 1, dash: 'dot'}},
+        ] : []
+    };
+
+    const config = {
+        responsive: true,
+        displayModeBar: true,
+        scrollZoom: true,
+        modeBarButtonsToRemove: ['lasso2d', 'select2d']
+    };
+
+    Plotly.react('chart', traces, layout, config);
+}
+
+// Add hover effect to labels
+document.querySelectorAll('label').forEach(label => {
+    label.addEventListener('mouseenter', function() {
+        this.style.transform = 'translateY(-2px)';
+        this.style.boxShadow = '0 4px 12px rgba(147, 51, 234, 0.3)';
+    });
+    label.addEventListener('mouseleave', function() {
+        this.style.transform = 'translateY(0)';
+        this.style.boxShadow = 'none';
+    });
+});
+
+document.addEventListener('DOMContentLoaded', updateComparisonChart);
+</script>
+
+{% endblock %}

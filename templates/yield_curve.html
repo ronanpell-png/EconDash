@@ -1,0 +1,474 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<p style="text-align: center; color: #a0a0a0; margin-bottom: 40px; font-size: 1.1rem;">
+    Monitor Treasury yields and detect economic warning signals
+</p>
+
+<!-- Hero Warning/Success Banner -->
+{% if is_inverted %}
+<div style="background: linear-gradient(135deg, #1a0a0a 0%, #2d0a0a 100%);
+            border: 2px solid #ef4444;
+            border-radius: 20px;
+            padding: 40px;
+            margin: 30px 0;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(239, 68, 68, 0.3);">
+
+    <!-- Animated warning pulses -->
+    <div style="position: absolute; top: 20px; left: 20px; width: 20px; height: 20px;
+                background: #ef4444; border-radius: 50%;
+                animation: pulse 2s infinite;"></div>
+    <div style="position: absolute; top: 20px; left: 20px; width: 20px; height: 20px;
+                background: #ef4444; border-radius: 50%; opacity: 0.6;
+                animation: pulse 2s infinite 0.5s;"></div>
+
+    <div style="display: flex; align-items: center; gap: 30px; flex-wrap: wrap;">
+        <div style="font-size: 5rem; line-height: 1;">⚠️</div>
+        <div style="flex: 1; min-width: 300px;">
+            <h2 style="margin: 0 0 15px 0; color: #ef4444; font-size: 2.2rem; font-weight: 700;">
+                Yield Curve Inversion Detected
+            </h2>
+            <div style="font-size: 2.5rem; font-weight: 700; margin: 15px 0; color: #fca5a5;">
+                2Y-10Y Spread: <span style="color: #ef4444;">{{ "%.2f"|format(spread_2_10) }}%</span>
+            </div>
+            <p style="margin: 0; color: #fca5a5; line-height: 1.8; font-size: 1.1rem;">
+                An inverted yield curve has preceded <strong style="color: #fff;">every U.S. recession since 1955</strong>.
+                Historically, recessions occur <strong style="color: #fff;">6-18 months</strong> after inversion begins.
+            </p>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(2.5); opacity: 0; }
+}
+</style>
+
+{% else %}
+<div style="background: linear-gradient(135deg, #0a1a0a 0%, #0a2d0a 100%);
+            border: 2px solid #10b981;
+            border-radius: 20px;
+            padding: 40px;
+            margin: 30px 0;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);">
+
+    <!-- Success checkmark animation -->
+    <div style="position: absolute; top: 20px; left: 20px; width: 30px; height: 30px;">
+        <svg viewBox="0 0 52 52" style="width: 30px; height: 30px;">
+            <circle cx="26" cy="26" r="25" fill="none" stroke="#10b981" stroke-width="2"/>
+            <path fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round"
+                  d="M14 27 l7 7 l16 -16" style="stroke-dasharray: 48; stroke-dashoffset: 48; animation: checkmark 0.5s ease-in-out forwards;"/>
+        </svg>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 30px; flex-wrap: wrap;">
+        <div style="font-size: 5rem; line-height: 1;">✅</div>
+        <div style="flex: 1; min-width: 300px;">
+            <h2 style="margin: 0 0 15px 0; color: #10b981; font-size: 2.2rem; font-weight: 700;">
+                Normal Yield Curve
+            </h2>
+            <div style="font-size: 2.5rem; font-weight: 700; margin: 15px 0; color: #6ee7b7;">
+                2Y-10Y Spread: <span style="color: #10b981;">+{{ "%.2f"|format(spread_2_10) }}%</span>
+            </div>
+            <p style="margin: 0; color: #6ee7b7; line-height: 1.8; font-size: 1.1rem;">
+                The yield curve is <strong style="color: #fff;">upward sloping</strong>, indicating healthy economic expectations.
+                Long-term rates are above short-term rates, which is the normal market condition.
+            </p>
+        </div>
+    </div>
+</div>
+
+<style>
+@keyframes checkmark {
+    to { stroke-dashoffset: 0; }
+}
+</style>
+{% endif %}
+
+<!-- Current Yield Curve Chart -->
+<div class="card" style="margin-top: 40px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
+        <h2 style="margin: 0; display: flex; align-items: center; gap: 10px;">
+            📊 Current Yield Curve
+        </h2>
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <span style="color: #a0a0a0; font-size: 0.9rem;">Shape:</span>
+            {% if is_inverted %}
+            <span class="badge badge-error">Inverted 📉</span>
+            {% else %}
+            <span class="badge badge-success">Normal 📈</span>
+            {% endif %}
+        </div>
+    </div>
+    <div id="current-curve" style="width: 100%; height: 550px;"></div>
+</div>
+
+<!-- Two Column Layout for Info -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 30px; margin: 40px 0;">
+
+    <!-- Understanding Section -->
+    <div class="card">
+        <h3 style="color: #a855f7; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+            📚 What is the Yield Curve?
+        </h3>
+        <p style="color: #a0a0a0; line-height: 1.8; margin-bottom: 20px;">
+            The yield curve plots Treasury bond yields against their maturity dates. It's one of the most powerful economic indicators.
+        </p>
+
+        <div style="background: rgba(147, 51, 234, 0.1); padding: 20px; border-radius: 12px; border-left: 4px solid #9333ea; margin-bottom: 15px;">
+            <h4 style="color: #a855f7; margin: 0 0 10px 0;">💡 Why It Matters</h4>
+            <p style="color: #a0a0a0; margin: 0; line-height: 1.6;">
+                The yield curve reflects investor expectations about future interest rates and economic growth.
+                Its shape can predict recessions with remarkable accuracy.
+            </p>
+        </div>
+    </div>
+
+    <!-- Shapes Section -->
+    <div class="card">
+        <h3 style="color: #a855f7; margin-bottom: 20px; display: flex; align-items: center; gap: 10px;">
+            📐 Yield Curve Shapes
+        </h3>
+
+        <div style="display: flex; flex-direction: column; gap: 15px;">
+            <div style="background: rgba(16, 185, 129, 0.1); padding: 18px; border-radius: 10px; border-left: 4px solid #10b981;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <strong style="color: #10b981; font-size: 1.1rem;">Normal ↗️</strong>
+                    <span style="color: #059669; font-size: 2rem; line-height: 1;">📈</span>
+                </div>
+                <p style="color: #a0a0a0; margin: 0; font-size: 0.95rem; line-height: 1.6;">
+                    Long-term rates higher than short-term. Indicates healthy economic growth expectations.
+                </p>
+            </div>
+
+            <div style="background: rgba(245, 158, 11, 0.1); padding: 18px; border-radius: 10px; border-left: 4px solid #f59e0b;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <strong style="color: #f59e0b; font-size: 1.1rem;">Flat ➡️</strong>
+                    <span style="color: #d97706; font-size: 2rem; line-height: 1;">📊</span>
+                </div>
+                <p style="color: #a0a0a0; margin: 0; font-size: 0.95rem; line-height: 1.6;">
+                    Short and long-term rates similar. Signals economic uncertainty or transition period.
+                </p>
+            </div>
+
+            <div style="background: rgba(239, 68, 68, 0.1); padding: 18px; border-radius: 10px; border-left: 4px solid #ef4444;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <strong style="color: #ef4444; font-size: 1.1rem;">Inverted ↘️</strong>
+                    <span style="color: #dc2626; font-size: 2rem; line-height: 1;">📉</span>
+                </div>
+                <p style="color: #a0a0a0; margin: 0; font-size: 0.95rem; line-height: 1.6;">
+                    Short-term rates exceed long-term. Strong recession predictor - has preceded every recession since 1955.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Historical Spread Chart with Enhanced Styling -->
+<div class="card" style="margin-top: 30px;">
+    <h2 style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+        📉 Historical 10Y-2Y Spread
+    </h2>
+    <p style="color: #a0a0a0; margin-bottom: 25px; font-size: 1.05rem;">
+        When this line goes <strong style="color: #ef4444;">below zero</strong> (red zone), the yield curve is inverted
+    </p>
+    <div id="spread-chart" style="width: 100%; height: 550px;"></div>
+</div>
+
+<!-- Why Inversion Predicts Recessions -->
+<div style="background: linear-gradient(135deg, rgba(147, 51, 234, 0.1), rgba(16, 185, 129, 0.05));
+            border: 1px solid rgba(147, 51, 234, 0.3);
+            border-radius: 16px;
+            padding: 40px;
+            margin: 40px 0;">
+    <h2 style="color: #a855f7; margin-bottom: 25px; font-size: 1.8rem;">
+        🔍 Why Does Inversion Predict Recessions?
+    </h2>
+
+    <div style="display: grid; gap: 25px;">
+        <div style="display: flex; gap: 20px; align-items: start;">
+            <div style="background: linear-gradient(135deg, #9333ea, #6b21a8);
+                        min-width: 50px; height: 50px; border-radius: 50%;
+                        display: flex; align-items: center; justify-content: center;
+                        font-size: 1.5rem; font-weight: 700; color: white;">1</div>
+            <div style="flex: 1;">
+                <h4 style="color: #ffffff; margin: 0 0 10px 0;">Investors Lose Confidence</h4>
+                <p style="color: #a0a0a0; margin: 0; line-height: 1.7;">
+                    When investors expect the economy to weaken, they buy long-term bonds (driving yields down)
+                    while avoiding short-term bonds (pushing short-term yields up).
+                </p>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 20px; align-items: start;">
+            <div style="background: linear-gradient(135deg, #9333ea, #6b21a8);
+                        min-width: 50px; height: 50px; border-radius: 50%;
+                        display: flex; align-items: center; justify-content: center;
+                        font-size: 1.5rem; font-weight: 700; color: white;">2</div>
+            <div style="flex: 1;">
+                <h4 style="color: #ffffff; margin: 0 0 10px 0;">Fed Rate Cut Expectations</h4>
+                <p style="color: #a0a0a0; margin: 0; line-height: 1.7;">
+                    Inversion suggests markets believe the Federal Reserve will eventually cut rates to combat
+                    an economic slowdown, making long-term bonds more attractive.
+                </p>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 20px; align-items: start;">
+            <div style="background: linear-gradient(135deg, #9333ea, #6b21a8);
+                        min-width: 50px; height: 50px; border-radius: 50%;
+                        display: flex; align-items: center; justify-content: center;
+                        font-size: 1.5rem; font-weight: 700; color: white;">3</div>
+            <div style="flex: 1;">
+                <h4 style="color: #ffffff; margin: 0 0 10px 0;">Self-Fulfilling Prophecy</h4>
+                <p style="color: #a0a0a0; margin: 0; line-height: 1.7;">
+                    When businesses and consumers see inversion, they become cautious, reducing spending and
+                    investment, which can actually trigger the recession they feared.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444; border-radius: 12px; padding: 25px; margin-top: 30px;">
+        <p style="margin: 0; color: #fca5a5; line-height: 1.8; font-size: 1.05rem;">
+            <strong style="color: #ef4444; font-size: 1.2rem;">Historical Accuracy:</strong><br>
+            Since 1955, every recession has been preceded by a 2Y-10Y yield curve inversion.
+            However, not every inversion has led to recession - timing varies from 6 to 24 months.
+        </p>
+    </div>
+</div>
+
+<!-- Current Rates Table -->
+<div class="card">
+    <h2 style="margin-bottom: 25px; display: flex; align-items: center; gap: 10px;">
+        💰 Current Treasury Rates
+    </h2>
+    <div style="overflow-x: auto;">
+        <table style="width: 100%; max-width: 900px; margin: 0 auto;">
+            <thead>
+                <tr>
+                    <th style="text-align: left; padding: 16px;">Maturity</th>
+                    <th style="text-align: center; padding: 16px;">Yield</th>
+                    <th style="text-align: right; padding: 16px;">Updated</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for key, data in treasuries %}
+                <tr style="transition: background 0.2s;">
+                    <td style="text-align: left; color: #ffffff; font-weight: 600; padding: 16px;">
+                        {{ data.name }}
+                    </td>
+                    <td style="text-align: center; padding: 16px;">
+                        {% if data.current is not none %}
+                            <span style="background: linear-gradient(135deg, #10b981, #059669);
+                                        color: white; padding: 8px 16px; border-radius: 20px;
+                                        font-weight: 700; font-size: 1.1em; display: inline-block;">
+                                {{ "%.2f"|format(data.current) }}%
+                            </span>
+                        {% else %}
+                            <span style="color: #666;">N/A</span>
+                        {% endif %}
+                    </td>
+                    <td style="text-align: right; font-size: 0.9em; color: #666; padding: 16px;">
+                        {{ data.date }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+const treasuryData = {{ treasuries | tojson }};
+
+// 1. Current Yield Curve with Enhanced Styling
+const maturities = treasuryData.map(item => item[1].maturity);
+const yields = treasuryData.map(item => item[1].current);
+const labels = treasuryData.map(item => item[1].name);
+
+const isInverted = {{ 'true' if is_inverted else 'false' }};
+
+const curveTrace = {
+    x: maturities,
+    y: yields,
+    mode: 'lines+markers',
+    type: 'scatter',
+    name: 'Treasury Yields',
+    line: {
+        color: isInverted ? '#ef4444' : '#10b981',
+        width: 4,
+        shape: 'spline'
+    },
+    marker: {
+        size: 14,
+        color: isInverted ? '#fca5a5' : '#6ee7b7',
+        line: {
+            color: isInverted ? '#ef4444' : '#10b981',
+            width: 3
+        }
+    },
+    fill: 'tozeroy',
+    fillcolor: isInverted ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)',
+    text: labels,
+    hovertemplate: '<b>%{text}</b><br>Maturity: %{x} years<br>Yield: %{y:.2f}%<extra></extra>'
+};
+
+const curveLayout = {
+    xaxis: {
+        title: { text: 'Time to Maturity (Years)', font: { size: 14, color: '#a0a0a0' } },
+        type: 'log',
+        showgrid: true,
+        gridcolor: '#2a2a2a',
+        color: '#a0a0a0'
+    },
+    yaxis: {
+        title: { text: 'Yield (%)', font: { size: 14, color: '#a0a0a0' } },
+        showgrid: true,
+        gridcolor: '#2a2a2a',
+        color: '#a0a0a0'
+    },
+    hovermode: 'closest',
+    plot_bgcolor: '#1a1a1a',
+    paper_bgcolor: 'transparent',
+    font: {
+        color: '#a0a0a0',
+        family: 'Inter, sans-serif'
+    },
+    margin: { t: 20, b: 70, l: 70, r: 20 }
+};
+
+const config = {
+    responsive: true,
+    displayModeBar: true,
+    scrollZoom: true,
+    modeBarButtonsToRemove: ['lasso2d', 'select2d']
+};
+
+Plotly.newPlot('current-curve', [curveTrace], curveLayout, config);
+
+// 2. Historical Spread Chart with Enhanced Styling
+const data_2y = treasuryData.find(item => item[0] === 'DGS2');
+const data_10y = treasuryData.find(item => item[0] === 'DGS10');
+
+if (data_2y && data_10y) {
+    const historical_2y = new Map(data_2y[1].historical);
+    const historical_10y = new Map(data_10y[1].historical);
+
+    const dates = [];
+    const spreads = [];
+
+    data_10y[1].historical.forEach(([date, rate_10y]) => {
+        const rate_2y = historical_2y.get(date);
+        if (rate_2y !== undefined && rate_10y !== null && rate_2y !== null) {
+            dates.push(date);
+            spreads.push(rate_10y - rate_2y);
+        }
+    });
+
+    const positiveSpreads = spreads.map(s => s >= 0 ? s : null);
+    const negativeSpreads = spreads.map(s => s < 0 ? s : null);
+
+    const spreadTracePositive = {
+        x: dates,
+        y: positiveSpreads,
+        mode: 'lines',
+        type: 'scatter',
+        name: 'Normal (Positive Spread)',
+        line: { color: '#10b981', width: 3 },
+        fill: 'tozeroy',
+        fillcolor: 'rgba(16, 185, 129, 0.2)',
+        hovertemplate: 'Date: %{x}<br>Spread: %{y:.2f}%<extra></extra>'
+    };
+
+    const spreadTraceNegative = {
+        x: dates,
+        y: negativeSpreads,
+        mode: 'lines',
+        type: 'scatter',
+        name: 'Inverted (Negative Spread)',
+        line: { color: '#ef4444', width: 3 },
+        fill: 'tozeroy',
+        fillcolor: 'rgba(239, 68, 68, 0.3)',
+        hovertemplate: 'Date: %{x}<br>Spread: %{y:.2f}%<extra></extra>'
+    };
+
+    const spreadLayout = {
+        xaxis: {
+            title: { text: 'Date', font: { size: 14, color: '#a0a0a0' } },
+            showgrid: true,
+            gridcolor: '#2a2a2a',
+            color: '#a0a0a0'
+        },
+        yaxis: {
+            title: { text: 'Spread (%)', font: { size: 14, color: '#a0a0a0' } },
+            showgrid: true,
+            gridcolor: '#2a2a2a',
+            color: '#a0a0a0',
+            zeroline: true,
+            zerolinecolor: '#ffffff',
+            zerolinewidth: 3
+        },
+        hovermode: 'x unified',
+        plot_bgcolor: '#1a1a1a',
+        paper_bgcolor: 'transparent',
+        font: {
+            color: '#a0a0a0',
+            family: 'Inter, sans-serif'
+        },
+        margin: { t: 20, b: 70, l: 70, r: 20 },
+        shapes: [
+            {
+                type: 'rect',
+                xref: 'paper',
+                x0: 0,
+                x1: 1,
+                yref: 'y',
+                y0: -10,
+                y1: 0,
+                fillcolor: 'rgba(239, 68, 68, 0.05)',
+                line: { width: 0 }
+            },
+            {
+                type: 'line',
+                x0: dates[0],
+                x1: dates[dates.length - 1],
+                y0: 0,
+                y1: 0,
+                line: { color: '#ffffff', width: 2, dash: 'solid' }
+            }
+        ],
+        annotations: [{
+            x: dates[dates.length - 1],
+            y: spreads[spreads.length - 1],
+            xanchor: 'left',
+            yanchor: 'middle',
+            text: spreads[spreads.length - 1] < 0 ?
+                  `<b>⚠️ INVERTED</b><br>${spreads[spreads.length - 1].toFixed(2)}%` :
+                  `<b>✓ Normal</b><br>+${spreads[spreads.length - 1].toFixed(2)}%`,
+            showarrow: true,
+            arrowhead: 2,
+            ax: 40,
+            ay: 0,
+            font: {
+                size: 14,
+                color: spreads[spreads.length - 1] < 0 ? '#ef4444' : '#10b981'
+            },
+            bgcolor: 'rgba(31, 31, 31, 0.95)',
+            bordercolor: spreads[spreads.length - 1] < 0 ? '#ef4444' : '#10b981',
+            borderwidth: 2,
+            borderpad: 8
+        }]
+    };
+
+    Plotly.newPlot('spread-chart', [spreadTracePositive, spreadTraceNegative], spreadLayout, config);
+}
+</script>
+
+{% endblock %}
